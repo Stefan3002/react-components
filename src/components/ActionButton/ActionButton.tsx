@@ -1,5 +1,11 @@
 import classNames from "classnames";
-import React, { MouseEventHandler, useEffect, useRef, useState } from "react";
+import React, {
+  MouseEventHandler,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import type { ButtonProps } from "../Button";
@@ -42,6 +48,10 @@ export type Props = PropsWithSpread<
      */
     loading?: boolean;
     /**
+     * Label announced by assistive technologies when the button is disabled. Should contain the reason for disabling the button.
+     */
+    disabledReasonLabel?: string;
+    /**
      * Function for handling button click event.
      */
     onClick?: MouseEventHandler<HTMLButtonElement>;
@@ -66,6 +76,7 @@ const ActionButton = ({
   children,
   className,
   onClick,
+  disabledReasonLabel,
   disabled = null,
   inline = false,
   loading = false,
@@ -78,7 +89,7 @@ const ActionButton = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
   const startLoadTime = useRef<Date | undefined>(undefined);
-
+  const buttonId = useId();
   // Set up loader timer
   useEffect(() => {
     let loaderTimeout: number;
@@ -172,32 +183,44 @@ const ActionButton = ({
   // forwardRef which is not currently supported by components that use
   // typescript generics.
   return (
-    <button
-      className={buttonClasses}
-      ref={ref}
-      onClick={isDisabled ? onClickDisabled : onClick}
-      aria-disabled={isDisabled || undefined}
-      style={
-        height && width
-          ? {
-              height: `${height}px`,
-              width: `${width}px`,
-            }
-          : undefined
-      }
-      {...buttonProps}
-    >
-      {showIcon ? (
-        <Icon
-          aria-label={showLoader ? Label.WAITING : Label.SUCCESS}
-          className={showLoader ? "u-animation--spin" : null}
-          light={iconLight}
-          name={icon}
-        />
-      ) : (
-        children
+    <>
+      <button
+        className={buttonClasses}
+        ref={ref}
+        onClick={isDisabled ? onClickDisabled : onClick}
+        aria-disabled={isDisabled || undefined}
+        aria-describedby={
+          disabled && disabledReasonLabel
+            ? `disabled-reason-label-${buttonId}`
+            : undefined
+        }
+        style={
+          height && width
+            ? {
+                height: `${height}px`,
+                width: `${width}px`,
+              }
+            : undefined
+        }
+        {...buttonProps}
+      >
+        {showIcon ? (
+          <Icon
+            aria-label={showLoader ? Label.WAITING : Label.SUCCESS}
+            className={showLoader ? "u-animation--spin" : null}
+            light={iconLight}
+            name={icon}
+          />
+        ) : (
+          children
+        )}
+      </button>
+      {disabled && disabledReasonLabel && (
+        <span className="u-off-screen" id={`disabled-reason-label-${buttonId}`}>
+          {disabledReasonLabel}
+        </span>
       )}
-    </button>
+    </>
   );
 };
 
